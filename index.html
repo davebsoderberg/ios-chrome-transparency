@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Safari Opaque-Chrome Experiment</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="intro">
+    <h1>Safari opaque-chrome experiment</h1>
+    <p>Hypothesis, from WebKit's <code>fixedContainerEdges</code>: Safari probes
+      <strong>one point per edge</strong> — 4px in from the edge, horizontally
+      centered — walks up to the nearest <code>fixed</code>/<code>sticky</code>
+      ancestor, and paints its chrome opaque only when that element is roughly
+      full viewport width (≥ 90%). DOM depth should be irrelevant.</p>
+    <p>Open on iPhone Safari, scroll until the bars pin, then work the toggles.
+      The panel shows the hypothesis's prediction for the current combo — if
+      Safari ever disagrees, the hypothesis is wrong.</p>
+    <p>The current config is mirrored into the URL, so a reload starts in that
+      state — handy once the opaque chrome gets stuck and won't reset in place.</p>
+    <ul class="predictions">
+      <li><strong>Gap 5px → 4px:</strong> flips translucent → opaque. The probe sits exactly 4px in.</li>
+      <li><strong>Width 100% → 85%:</strong> flips opaque → translucent. The probe still hits the bar, but it fails the 0.9 ratio.</li>
+      <li><strong>48% left-aligned:</strong> translucent even at 0px gap. The centered probe never touches the bar.</li>
+      <li><strong>Depth 1 → 4 wrappers:</strong> changes nothing, in any combo.</li>
+      <li><strong>Decoy on:</strong> back to translucent even with a fully qualifying bar behind it.</li>
+    </ul>
+  </header>
+
+  <div class="track" id="track" data-width="100" data-decoy="no">
+    <!-- the 4-deep nest the Depth toggle re-parents the bars into -->
+    <div class="deep"><div><div><div id="deepEnd"></div></div></div></div>
+
+    <div class="panel">
+      <div class="row">
+        <span class="lbl">gap</span>
+        <span class="seg" data-key="gap">
+          <button data-val="5">5px</button>
+          <button data-val="4">4px</button>
+          <button data-val="0">0px</button>
+        </span>
+      </div>
+      <div class="row">
+        <span class="lbl">width</span>
+        <span class="seg" data-key="width">
+          <button data-val="100">100%</button>
+          <button data-val="85">85%</button>
+          <button data-val="48">48% left</button>
+        </span>
+      </div>
+      <div class="row">
+        <span class="lbl">depth</span>
+        <span class="seg" data-key="deep">
+          <button data-val="no">1 wrapper</button>
+          <button data-val="yes">4 wrappers</button>
+        </span>
+      </div>
+      <div class="row">
+        <span class="lbl">decoy</span>
+        <span class="seg" data-key="decoy">
+          <button data-val="no">off</button>
+          <button data-val="yes">on</button>
+        </span>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div class="bar top-bar" id="topBar">top bar</div>
+    <div class="bar bottom-bar" id="bottomBar">bottom bar</div>
+    <div class="decoy top-decoy" id="topDecoy">decoy</div>
+    <div class="decoy bottom-decoy" id="bottomDecoy">decoy</div>
+
+    <div class="hint" style="top: 42%">scroll until both bars pin, then toggle ↑</div>
+    <div class="hint" style="top: 72%">watch the status bar + toolbar backgrounds</div>
+  </div>
+
+  <footer class="outro">
+    <h2>Reading the results</h2>
+    <p>Every prediction holds → culprit confirmed: a single probe point 4px in
+      from each edge, plus a ~full-width size check. Depth was a coincidence.</p>
+    <p>If the depth toggle changes anything → the depth theory lives.
+      If 85% still triggers → the ratio constant is different (or absent).
+      If the decoy doesn't suppress it → Safari samples more than one point.</p>
+    <p class="note">The control panel is itself sticky, pinned 60px off the top
+      edge — far outside the probe. If the top edge misbehaves identically in
+      every combo, suspect the panel and bump its <code>top</code> further.</p>
+  </footer>
+</body>
+</html>
